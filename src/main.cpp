@@ -983,7 +983,7 @@ int64 GetProofOfStakeReward(int64 nCoinAge, unsigned int nBits, unsigned int nTi
 }
 
 static const int64 nTargetTimespan = 15 * 40;  
-static const int64 nTargetSpacingWorkMax = 12 * nStakeTargetSpacing; 
+static const int64 nTargetSpacingWorkMax = 12 * nStakeTargetSpacing;
 
 //
 // maximum nBits value could possible be required nTime after
@@ -1070,13 +1070,26 @@ unsigned int GetNextTargetRequired(const CBlockIndex* pindexLast, bool fProofOfS
 
     int64 nTargetSpacing = fProofOfStake? nStakeTargetSpacing : min(nTargetSpacingWorkMax, (int64) nStakeTargetSpacing * (1 + pindexLast->nHeight - pindexPrev->nHeight));
     int64 nInterval = nTargetTimespan / nTargetSpacing;
+	if (pindexLast->nHeight > 4500 && nInterval < 3) {
+	int64 nInterval = 2;
     bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
+    bnNew /= ((nInterval + 1) * nTargetSpacing);
+	if(fDebug) {
+		printf("nInterval = %I64d\n", nInterval); }
+
+    if (bnNew > bnTargetLimit)
+        bnNew = bnTargetLimit;
+
+    return bnNew.GetCompact();}
+	
+	else {
+	bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
     bnNew /= ((nInterval + 1) * nTargetSpacing);
 
     if (bnNew > bnTargetLimit)
         bnNew = bnTargetLimit;
 
-    return bnNew.GetCompact();
+    return bnNew.GetCompact(); }
 }
 
 bool CheckProofOfWork(uint256 hash, unsigned int nBits)
